@@ -1,14 +1,37 @@
 ---
-- include_tasks: plex.yml
-  when: (ansible_os_family == 'RedHat') or
-        (ansible_os_family == 'Debian')
+- block:
+    - name: Install apt-transport-https
+      become: yes
+      apt:
+        name: apt-transport-https
+        state: present
 
-- name: Include wilmardo.tautulli
-  include_role:
-    name: tautulli
-  when: tautulli_install
+    - name: Add Plex apt key (Ubuntu & Debian with systemd)
+      become: yes
+      apt_key:
+        url: https://downloads.plex.tv/plex-keys/PlexSign.key
+        state: present
 
-- name: Include wilmardo.plexupdate
-  include_role:
-    name: plexupdate
-  when: plexupdate_install
+    - name: Add Plex apt repo (Ubuntu & Debian with systemd)
+      become: yes
+      apt_repository:
+        repo: deb https://downloads.plex.tv/repo/deb public main
+        state: present
+      changed_when: false
+
+    - name: Apt install Plex
+      become: yes
+      apt:
+        name: plexmediaserver
+        state: present
+        update_cache: true
+      notify: restart plex
+
+  when: ansible_os_family == "Debian"
+
+- name: Autostart Plex and start service
+  become: yes
+  service:
+    name: plexmediaserver
+    enabled: true
+  notify: restart plex

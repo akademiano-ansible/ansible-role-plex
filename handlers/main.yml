@@ -1,10 +1,6 @@
 ---
 - name: restart plex
+  become: yes
   service:
     name: plexmediaserver
-    state: restarted
-
-- name: restart tautulli
-  service:
-    name: tautulli
     state: restarted
